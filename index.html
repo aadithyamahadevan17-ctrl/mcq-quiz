@@ -142,30 +142,29 @@ function generateQuiz() {
     }
 
     questions = parseQuestions(text);
-    const shuffleQuestions =
-    document.getElementById("shuffleQuestions").checked;
-
-const shuffleOptions =
-    document.getElementById("shuffleOptions").checked;
-    if (shuffleQuestions) {
-    questions.sort(() => Math.random() - 0.5);
-}
-
-}
 
     if (questions.length === 0) {
         alert("No questions detected.");
         return;
     }
 
+    const shuffleQuestions =
+        document.getElementById("shuffleQuestions").checked;
+
+    const shuffleOptions =
+        document.getElementById("shuffleOptions").checked;
+
+    if (shuffleQuestions) {
+        questions.sort(() => Math.random() - 0.5);
+    }
+
     userAnswers = {};
-currentQuestion = 0;
+    currentQuestion = 0;
 
-document.getElementById("copyLinkButton").style.display = "inline-block";
+    document.getElementById("copyLinkButton").style.display = "inline-block";
 
-showQuestion();
+    showQuestion();
 }
-
 
 function parseQuestions(text) {
 
