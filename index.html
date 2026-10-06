@@ -86,6 +86,18 @@
 
 <p id="pasteLabel">Paste your MCQ questions below:</p>
 
+<div id="shuffleControls">
+    <label style="display: block; border: none; padding: 5px 0;">
+        <input type="checkbox" id="shuffleQuestions">
+        Shuffle Questions
+    </label>
+
+    <label style="display: block; border: none; padding: 5px 0;">
+        <input type="checkbox" id="shuffleOptions">
+        Shuffle Options
+    </label>
+</div>
+
     <textarea id="input" rows="20" cols="100"
         placeholder="Example:
 
@@ -130,6 +142,29 @@ function generateQuiz() {
     }
 
     questions = parseQuestions(text);
+    const shuffleQuestions =
+    document.getElementById("shuffleQuestions").checked;
+
+const shuffleOptions =
+    document.getElementById("shuffleOptions").checked;
+    if (shuffleQuestions) {
+    questions.sort(() => Math.random() - 0.5);
+}
+if (shuffleOptions) {
+    for (let q of questions) {
+        const correctText =
+            q.options.find(option => option.letter === q.answer)?.text;
+
+        q.options.sort(() => Math.random() - 0.5);
+
+        q.options.forEach((option, index) => {
+            option.letter = String.fromCharCode(65 + index);
+        });
+
+        q.answer =
+            q.options.find(option => option.text === correctText)?.letter;
+    }
+}
 
     if (questions.length === 0) {
         alert("No questions detected.");
@@ -440,6 +475,7 @@ async function loadQuizFromLink() {
         document.getElementById("titleLabel").style.display = "none";
         document.getElementById("pasteLabel").style.display = "none";
         document.getElementById("generateButton").style.display = "none";
+        document.getElementById("shuffleControls").style.display = "none";
 
         document.querySelector("h1").innerText = title;
 
