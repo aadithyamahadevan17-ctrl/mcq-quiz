@@ -365,90 +365,90 @@ function previousQuestion() {
 }
 
 
-function finishQuiz() {
-    for (let i = 0; i < questions.length; i++) {
-        if (!userAnswers[i]) {
-            alert("Please answer Question " + (i + 1) + " first.");
-            currentQuestion = i;
+async function loadQuizFromLink() {
+    const params = new URLSearchParams(window.location.search);
+    const quizData = params.get("quiz");
+
+    if (!quizData) {
+        return;
+    }
+
+    // Load the 120-question Ecology quiz
+    if (quizData === "ecology") {
+        try {
+            const response = await fetch("ecology.json");
+
+            if (!response.ok) {
+                throw new Error("Could not load ecology.json");
+            }
+
+            const data = await response.json();
+
+            document.getElementById("quizTitle").value =
+                data.title || "Ecology MCQ Quiz";
+
+            questions = data.questions;
+
+            userAnswers = {};
+            currentQuestion = 0;
+
+            document.getElementById("copyLinkButton").style.display = "none";
+
+            document.getElementById("input").style.display = "none";
+            document.getElementById("quizTitle").style.display = "none";
+            document.getElementById("titleLabel").style.display = "none";
+            document.getElementById("pasteLabel").style.display = "none";
+            document.getElementById("generateButton").style.display = "none";
+
+            document.querySelector("h1").innerText =
+                data.title || "Ecology MCQ Quiz";
+
             showQuestion();
-            return;
-        }
-    }
 
-    let correct = 0;
-
-    for (let i = 0; i < questions.length; i++) {
-        if (userAnswers[i] === questions[i].answer) {
-            correct++;
-        }
-    }
-
-    let wrong = questions.length - correct;
-    let percentage = (correct / questions.length) * 100;
-
-    const title =
-        document.getElementById("quizTitle").value.trim() ||
-        "MCQ Quiz";
-
-    let html = "";
-
-    html += "<h2>" + title + "</h2>";
-
-    html += "<h3>Quiz Finished</h3>";
-
-    html += "<h3>Score: " +
-            correct + " / " +
-            questions.length +
-            "</h3>";
-
-    html += "<p>Percentage: " +
-            percentage.toFixed(1) +
-            "%</p>";
-
-    html += "<p>Correct: " + correct + "</p>";
-    html += "<p>Wrong: " + wrong + "</p>";
-
-    html += "<hr>";
-
-    for (let i = 0; i < questions.length; i++) {
-
-        let q = questions[i];
-        let userAnswer = userAnswers[i] || "Not answered";
-
-        html += "<h3>Question " + (i + 1) + "</h3>";
-
-        html += "<p>" + q.question + "</p>";
-
-        if (userAnswer === q.answer) {
-            html += "<p><b>✓ Correct</b></p>";
-        } else {
-            html += "<p><b>✗ Wrong</b></p>";
+        } catch (error) {
+            alert("Could not load Ecology quiz.");
+            console.error(error);
         }
 
-        html += "<p>Your answer: <b>" +
-                userAnswer +
-                "</b></p>";
-
-        html += "<p>Correct answer: <b>" +
-                q.answer +
-                "</b></p>";
-
-        html += "<hr>";
+        return;
     }
 
-    html += `
-        <br>
+    // Existing encoded quiz links
+    try {
+        const decoded = decodeURIComponent(
+            atob(quizData)
+        );
 
-        <button onclick="retakeQuiz()">
-            Retake Quiz
-        </button>
+        const data = JSON.parse(decoded);
 
-        <button onclick="createNewQuiz()">
-            Create New Quiz
-        </button>
-    `;
+        const title = data.title || "MCQ Quiz";
 
-    document.getElementById("quiz").innerHTML = html;
+        document.getElementById("quizTitle").value = title;
+
+        document.getElementById("input").value =
+            data.questions || "";
+
+        questions = parseQuestions(data.questions);
+
+        userAnswers = {};
+        currentQuestion = 0;
+
+        document.getElementById("copyLinkButton").style.display = "none";
+
+        document.getElementById("input").style.display = "none";
+        document.getElementById("quizTitle").style.display = "none";
+        document.getElementById("titleLabel").style.display = "none";
+        document.getElementById("pasteLabel").style.display = "none";
+        document.getElementById("generateButton").style.display = "none";
+
+        document.querySelector("h1").innerText = title;
+
+        showQuestion();
+
+    } catch (error) {
+        alert("Invalid quiz link.");
+        console.error(error);
+    }
 }
 function copyQuizLink() {
 
@@ -474,62 +474,7 @@ function copyQuizLink() {
 
     alert("Quiz link copied!");
 }
-function loadQuizFromLink() {
 
-    const params = new URLSearchParams(window.location.search);
-
-    const quizData = params.get("quiz");
-
-    if (!quizData) {
-        return;
-    }
-
-    try {
-
-        const decoded = decodeURIComponent(
-            atob(quizData)
-        );
-
-        const data = JSON.parse(decoded);
-
-        const title = data.title || "MCQ Quiz";
-
-document.getElementById("quizTitle").value = title;
-
-        document.getElementById("input").value =
-            data.questions || "";
-
-        questions = parseQuestions(data.questions);
-
-        userAnswers = {};
-        currentQuestion = 0;
-
-        document.getElementById("copyLinkButton").style.display =
-            "none";
-
-        document.getElementById("input").style.display =
-            "none";
-
-        document.getElementById("quizTitle").style.display =
-            "none";
-            document.getElementById("titleLabel").style.display =
-    "none";
-
-document.getElementById("pasteLabel").style.display =
-    "none";
-
-document.getElementById("generateButton").style.display =
-    "none";
-document.querySelector("h1").innerText = title;
-        showQuestion();
-
-    } catch (error) {
-
-        alert("Invalid quiz link.");
-
-        console.error(error);
-    }
-}
 function retakeQuiz() {
 
     userAnswers = {};
