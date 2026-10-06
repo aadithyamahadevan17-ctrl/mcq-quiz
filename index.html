@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MCQ Quiz Generator</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        #quiz {
+            background: white;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        label {
+            display: block;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        label:hover {
+            background: #f0f0f0;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<h1>MCQ Quiz Generator</h1>
+
+<label id="titleLabel" for="quizTitle"><b>Quiz Title:</b></label>
+
+<br><br>
+
+<input
+    type="text"
+    id="quizTitle"
+    placeholder="Example: Digital Electronics - Module 1"
+    style="width: 100%; padding: 12px; box-sizing: border-box; font-size: 16px;"
+>
+
+<br><br>
+
+<p id="pasteLabel">Paste your MCQ questions below:</p>
+
+    <textarea id="input" rows="20" cols="100"
+        placeholder="Example:
+
+1. Which is a sorting algorithm?
+
+A) Dijkstra
+B) Merge Sort ✓
+C) BFS
+D) DFS
+
+2. What is 2 + 2?
+
+A) 3
+B) 4 ✓
+C) 5
+D) 6"></textarea>
+
+    <br><br>
+
+    <button id="generateButton" onclick="generateQuiz()">Generate Quiz</button>
+
+    <button onclick="copyQuizLink()" id="copyLinkButton" style="display:none;">
+    Copy Quiz Link
+</button>
+
+    <div id="quiz"></div>
+
+    <script>
+
+let questions = [];
+let userAnswers = {};
+let currentQuestion = 0;
+
+
+function generateQuiz() {
+
+    const text = document.getElementById("input").value;
+
+    if (text.trim() === "") {
+        alert("Please paste some MCQs first.");
+        return;
+    }
+
+    questions = parseQuestions(text);
+
+    if (questions.length === 0) {
+        alert("No questions detected.");
+        return;
+    }
+
+    userAnswers = {};
+currentQuestion = 0;
+
+document.getElementById("copyLinkButton").style.display = "inline-block";
+
+showQuestion();
+}
+
+
+function parseQuestions(text) {
+
+    const lines = text.split("\n");
+
+    let result = [];
+    let current = null;
+    let pendingAnswer = null;
+
+    for (let line of lines) {
+
+        line = line.trim();
+
+        if (line === "") continue;
+
+        // Detect answer lines such as:
+// Answer: B
+// Ans: B
+// Correct Answer: B
+// Correct: B
+
+let answerMatch = line.match(
+    /^(?:answer|ans|correct answer|correct)\s*[:\-]\s*([A-D])\s*$/i
+);
+
+if (answerMatch) {
+
+    pendingAnswer = answerMatch[1].toUpperCase();
+
+    if (current !== null) {
+        current.answer = pendingAnswer;
+    }
+
+    continue;
+}
+
+        let questionMatch = line.match(/^(\d+)[.)]\s*(.*)/);
+
+        if (questionMatch) {
+
+            if (current !== null) {
+                result.push(current);
+            }
+
+            current = {
+                question: questionMatch[2],
+                options: [],
+                answer: null
+            };
+
+            continue;
+        }
+
+        let optionMatch = line.match(/^([A-D])[.)]\s*(.*)/i);
+
+        if (optionMatch && current !== null) {
+
+            let letter = optionMatch[1].toUpperCase();
+            let optionText = optionMatch[2];
+
+            let isCorrect = false;
+
+            if (optionText.includes("✓") ||
+                optionText.includes("✔")) {
+
+                isCorrect = true;
+
+                optionText = optionText
+                    .replace(/✓/g, "")
+                    .replace(/✔/g, "")
+                    .trim();
+            }
+
+            if (optionText.endsWith("*")) {
+
+                isCorrect = true;
+
+                optionText = optionText
+                    .replace(/\*$/, "")
+                    .trim();
+            }
+
+            if (optionText.includes("**")) {
+
+                isCorrect = true;
+
+                optionText = optionText
+                    .replace(/\*\*/g, "")
+                    .trim();
+            }
+
+            current.options.push({
+                letter: letter,
+                text: optionText
+            });
+
+            if (isCorrect) {
+                current.answer = letter;
+            }
+        }
+    }
+
+    if (current !== null) {
+        result.push(current);
+    }
+
+    return result;
+}
+
+
+function showQuestion() {
+
+const quiz = document.getElementById("quiz");
+
+const q = questions[currentQuestion];
+
+const title = document.getElementById("quizTitle").value.trim();
+
+    let html = "";
+    html += "<h2>" +
+        (title || "MCQ Quiz") +
+        "</h2>";
+
+html += "<hr>";
+    let progress = ((currentQuestion + 1) / questions.length) * 100;
+
+html += "<h2>Question " +
+        (currentQuestion + 1) +
+        " of " +
+        questions.length +
+        "</h2>";
+
+html += `
+    <div style="
+        width: 100%;
+        height: 10px;
+        background: #ddd;
+        border-radius: 5px;
+        margin-bottom: 25px;
+    ">
+        <div style="
+            width: ${progress}%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+        "></div>
+    </div>
+`;
+
+    html += "<h3>" + q.question + "</h3>";
+
+    for (let option of q.options) {
+
+        let selected = "";
+
+        if (userAnswers[currentQuestion] === option.letter) {
+            selected = "checked";
+        }
+
+        html += `
+            <div>
+                <label>
+                    <input type="radio"
+                           name="answer"
+                           value="${option.letter}"
+                           ${selected}
+                           onchange="selectAnswer('${option.letter}')">
+
+                    ${option.letter}) ${option.text}
+                </label>
+            </div>
+            <br>
+        `;
+    }
+
+    html += `
+        <button onclick="previousQuestion()">
+            Previous
+        </button>
+
+        <button onclick="nextQuestion()">
+            Next
+        </button>
+
+        <button onclick="finishQuiz()">
+            FINISH
+        </button>
+    `;
+
+    quiz.innerHTML = html;
+}
+
+
+function selectAnswer(answer) {
+
+    userAnswers[currentQuestion] = answer;
+}
+
+
+function nextQuestion() {
+
+    if (currentQuestion < questions.length - 1) {
+
+        currentQuestion++;
+
+        showQuestion();
+    }
+}
+
+
+function previousQuestion() {
+
+    if (currentQuestion > 0) {
+
+        currentQuestion--;
+
+        showQuestion();
+    }
+}
+
+
+function finishQuiz() {
+    for (let i = 0; i < questions.length; i++) {
+        if (!userAnswers[i]) {
+            alert("Please answer Question " + (i + 1) + " first.");
+            currentQuestion = i;
+            showQuestion();
+            return;
+        }
+    }
+
+    let correct = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+        if (userAnswers[i] === questions[i].answer) {
+            correct++;
+        }
+    }
+
+    let wrong = questions.length - correct;
+    let percentage = (correct / questions.length) * 100;
+
+    const title =
+        document.getElementById("quizTitle").value.trim() ||
+        "MCQ Quiz";
+
+    let html = "";
+
+    html += "<h2>" + title + "</h2>";
+
+    html += "<h3>Quiz Finished</h3>";
+
+    html += "<h3>Score: " +
+            correct + " / " +
+            questions.length +
+            "</h3>";
+
+    html += "<p>Percentage: " +
+            percentage.toFixed(1) +
+            "%</p>";
+
+    html += "<p>Correct: " + correct + "</p>";
+    html += "<p>Wrong: " + wrong + "</p>";
+
+    html += "<hr>";
+
+    for (let i = 0; i < questions.length; i++) {
+
+        let q = questions[i];
+        let userAnswer = userAnswers[i] || "Not answered";
+
+        html += "<h3>Question " + (i + 1) + "</h3>";
+
+        html += "<p>" + q.question + "</p>";
+
+        if (userAnswer === q.answer) {
+            html += "<p><b>✓ Correct</b></p>";
+        } else {
+            html += "<p><b>✗ Wrong</b></p>";
+        }
+
+        html += "<p>Your answer: <b>" +
+                userAnswer +
+                "</b></p>";
+
+        html += "<p>Correct answer: <b>" +
+                q.answer +
+                "</b></p>";
+
+        html += "<hr>";
+    }
+
+    html += `
+        <br>
+
+        <button onclick="retakeQuiz()">
+            Retake Quiz
+        </button>
+
+        <button onclick="createNewQuiz()">
+            Create New Quiz
+        </button>
+    `;
+
+    document.getElementById("quiz").innerHTML = html;
+}
+function copyQuizLink() {
+
+    const text = document.getElementById("input").value;
+
+    const title = document.getElementById("quizTitle").value;
+
+    const data = {
+        title: title,
+        questions: text
+    };
+
+    const encoded = btoa(
+        encodeURIComponent(JSON.stringify(data))
+    );
+
+    const link =
+        window.location.href.split("?")[0] +
+        "?quiz=" +
+        encoded;
+
+    navigator.clipboard.writeText(link);
+
+    alert("Quiz link copied!");
+}
+function loadQuizFromLink() {
+
+    const params = new URLSearchParams(window.location.search);
+
+    const quizData = params.get("quiz");
+
+    if (!quizData) {
+        return;
+    }
+
+    try {
+
+        const decoded = decodeURIComponent(
+            atob(quizData)
+        );
+
+        const data = JSON.parse(decoded);
+
+        const title = data.title || "MCQ Quiz";
+
+document.getElementById("quizTitle").value = title;
+
+        document.getElementById("input").value =
+            data.questions || "";
+
+        questions = parseQuestions(data.questions);
+
+        userAnswers = {};
+        currentQuestion = 0;
+
+        document.getElementById("copyLinkButton").style.display =
+            "none";
+
+        document.getElementById("input").style.display =
+            "none";
+
+        document.getElementById("quizTitle").style.display =
+            "none";
+            document.getElementById("titleLabel").style.display =
+    "none";
+
+document.getElementById("pasteLabel").style.display =
+    "none";
+
+document.getElementById("generateButton").style.display =
+    "none";
+document.querySelector("h1").innerText = title;
+        showQuestion();
+
+    } catch (error) {
+
+        alert("Invalid quiz link.");
+
+        console.error(error);
+    }
+}
+function retakeQuiz() {
+
+    userAnswers = {};
+
+    currentQuestion = 0;
+
+    showQuestion();
+}
+function createNewQuiz() {
+
+    // Remove quiz link from the address
+    window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+    );
+
+    // Show creator controls
+    document.getElementById("quizTitle").style.display = "block";
+    document.getElementById("titleLabel").style.display = "block";
+    document.getElementById("pasteLabel").style.display = "block";
+    document.getElementById("input").style.display = "block";
+    document.getElementById("generateButton").style.display = "inline-block";
+
+    // Hide copy button until a new quiz is generated
+    document.getElementById("copyLinkButton").style.display = "none";
+
+    // Clear old data
+    document.getElementById("quizTitle").value = "";
+    document.getElementById("input").value = "";
+
+    document.getElementById("quiz").innerHTML = "";
+
+    questions = [];
+    userAnswers = {};
+    currentQuestion = 0;
+}
+loadQuizFromLink();
+</script>
+
+</body>
+</html>
