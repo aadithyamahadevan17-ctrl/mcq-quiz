@@ -384,6 +384,114 @@ function previousQuestion() {
         showQuestion();
     }
 }
+        function finishQuiz() {
+
+    for (let i = 0; i < questions.length; i++) {
+
+        if (!userAnswers[i]) {
+
+            alert("Please answer Question " + (i + 1) + " first.");
+
+            currentQuestion = i;
+
+            showQuestion();
+
+            return;
+        }
+    }
+
+    let correct = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+
+        if (userAnswers[i] === questions[i].answer) {
+            correct++;
+        }
+    }
+
+    let wrong = questions.length - correct;
+
+    let percentage =
+        (correct / questions.length) * 100;
+
+    const title =
+        document.getElementById("quizTitle").value.trim() ||
+        "MCQ Quiz";
+
+    let html = "";
+
+    html += "<h2>" + title + "</h2>";
+
+    html += "<h3>Quiz Finished</h3>";
+
+    html += "<h3>Score: " +
+            correct + " / " +
+            questions.length +
+            "</h3>";
+
+    html += "<p>Percentage: " +
+            percentage.toFixed(1) +
+            "%</p>";
+
+    html += "<p>Correct: " +
+            correct +
+            "</p>";
+
+    html += "<p>Wrong: " +
+            wrong +
+            "</p>";
+
+    html += "<hr>";
+
+    for (let i = 0; i < questions.length; i++) {
+
+        let q = questions[i];
+
+        let userAnswer =
+            userAnswers[i] || "Not answered";
+
+        html += "<h3>Question " +
+                (i + 1) +
+                "</h3>";
+
+        html += "<p>" +
+                q.question +
+                "</p>";
+
+        if (userAnswer === q.answer) {
+
+            html += "<p><b>✓ Correct</b></p>";
+
+        } else {
+
+            html += "<p><b>✗ Wrong</b></p>";
+        }
+
+        html += "<p>Your answer: <b>" +
+                userAnswer +
+                "</b></p>";
+
+        html += "<p>Correct answer: <b>" +
+                q.answer +
+                "</b></p>";
+
+        html += "<hr>";
+    }
+
+    html += `
+        <br>
+
+        <button onclick="retakeQuiz()">
+            Retake Quiz
+        </button>
+
+        <button onclick="createNewQuiz()">
+            Create New Quiz
+        </button>
+    `;
+
+    document.getElementById("quiz").innerHTML = html;
+}
 
 
 async function loadQuizFromLink() {
