@@ -150,20 +150,7 @@ const shuffleOptions =
     if (shuffleQuestions) {
     questions.sort(() => Math.random() - 0.5);
 }
-if (shuffleOptions) {
-    for (let q of questions) {
-        const correctText =
-            q.options.find(option => option.letter === q.answer)?.text;
 
-        q.options.sort(() => Math.random() - 0.5);
-
-        q.options.forEach((option, index) => {
-            option.letter = String.fromCharCode(65 + index);
-        });
-
-        q.answer =
-            q.options.find(option => option.text === correctText)?.letter;
-    }
 }
 
     if (questions.length === 0) {
